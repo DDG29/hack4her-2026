@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import type { Store } from './components/Map';
 
 // Dummy data for KPI calculations
 const accounts = [
@@ -12,11 +13,10 @@ const accounts = [
   { id: '5', risk: 'lo', territory: 'CDMX', avgTransactions: 100 },
 ];
 
-// Importar dinámicamente el mapa (evita problemas con SSR)
 const Map = dynamic(() => import('./components/Map'), {
   ssr: false,
   loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando mapa...</div>
-}); 
+});
 
 /* ------------------------------------------------------------------ */
 /* SVG icon helper                                                      */
@@ -112,12 +112,15 @@ const criticalRegionCount = accounts
 /* ------------------------------------------------------------------ */
 /* Main Dashboard                                                       */
 /* ------------------------------------------------------------------ */
+const RISK_LABEL: Record<string, string> = { hi: 'ALTO', md: 'MEDIO', lo: 'BAJO' };
+
 export default function Dashboard() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [hintGone, setHintGone] = useState(false);
   const [layerPopOpen, setLayerPopOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<'Gerente' | 'Supervisor' | 'Analista'>('Gerente');
   const [activeView, setActiveView] = useState<'Mapa' | 'Lista'>('Mapa');
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const layerBtnRef = useRef<HTMLButtonElement>(null);
 
   function openDrawer() {
@@ -126,6 +129,12 @@ export default function Dashboard() {
   }
   function closeDrawer() {
     setDrawerOpen(false);
+  }
+
+  function handleStoreSelect(store: Store) {
+    setSelectedStore(store);
+    setDrawerOpen(true);
+    setHintGone(true);
   }
 
   useEffect(() => {
@@ -270,7 +279,7 @@ export default function Dashboard() {
 
             {/* ===================== MAP ======================== */}
             <div className="mapwrap" id="mapwrap" style={{ position: 'relative' }}>
-              <Map />
+              <Map onStoreSelect={handleStoreSelect} />
 
               {/* map tools */}
               <div className="map-tools">
@@ -357,16 +366,20 @@ export default function Dashboard() {
                 <div className="acct-card">
                   <div className="acct-name">
                     <div>
-                      <h2>Abarrotes &ldquo;La Esquina&rdquo;</h2>
+                      <h2>{selectedStore?.name ?? 'Selecciona una cuenta'}</h2>
                       <div className="meta">
-                        <span>ID <b>#4827</b></span>
+                        <span>ID <b>#{selectedStore?.id ?? '—'}</b></span>
                         <span>·</span>
-                        <span>Guadalajara, Jal.</span>
+                        <span>{selectedStore?.territory ?? '—'}</span>
                         <span>·</span>
-                        <span>Tiendita</span>
+                        <span>{selectedStore?.type ?? '—'}</span>
                       </div>
                     </div>
-                    <span className="risk-badge hi"><span className="pulse" />Alto</span>
+                    {selectedStore && (
+                      <span className={`risk-badge ${selectedStore.risk}`}>
+                        <span className="pulse" />{RISK_LABEL[selectedStore.risk]}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -392,8 +405,8 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <div className="lbl">Riesgo de churn · 30d</div>
-                    <div className="num">88<small>%</small></div>
-                    <div className="delta">+24 pts en 14 días</div>
+                    <div className="num">{selectedStore?.churnScore ?? '—'}<small>%</small></div>
+                    <div className="delta">score del modelo</div>
                   </div>
                 </div>
 
@@ -405,9 +418,9 @@ export default function Dashboard() {
                     <span className="sub">vs prom. 18d</span>
                   </div>
                   <div className="mini-stat">
-                    <span className="lbl">Valor cliente</span>
-                    <span className="val">$184k</span>
-                    <span className="sub">MXN / año</span>
+                    <span className="lbl">Tamaño</span>
+                    <span className="val">{selectedStore?.size ?? '—'}</span>
+                    <span className="sub">categoría de cuenta</span>
                   </div>
                   <div className="mini-stat" style={{ gridColumn: 'span 2' }}>
                     <span className="lbl">Productividad refrigerador</span>
