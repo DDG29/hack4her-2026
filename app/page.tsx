@@ -1,6 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dummy data for KPI calculations
+const accounts = [
+  { id: '1', risk: 'hi', territory: 'La Paz', avgTransactions: 30 },
+  { id: '2', risk: 'hi', territory: 'Monterrey', avgTransactions: 25 },
+  { id: '3', risk: 'hi', territory: 'La Paz', avgTransactions: 20 },
+  { id: '4', risk: 'md', territory: 'Monterrey', avgTransactions: 50 },
+  { id: '5', risk: 'lo', territory: 'CDMX', avgTransactions: 100 },
+];
+
+// Importar dinámicamente el mapa (evita problemas con SSR)
+const Map = dynamic(() => import('./components/Map'), {
+  ssr: false,
+  loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando mapa...</div>
+}); 
 
 /* ------------------------------------------------------------------ */
 /* SVG icon helper                                                      */
@@ -70,6 +86,28 @@ function Chip({
     </span>
   );
 }
+
+const totalAccounts = accounts.length
+
+const highRisk = accounts.filter((a: {risk: string}) => a.risk === 'hi').length
+
+const valueAtRisk = accounts
+  .filter((a: {risk: string}) => a.risk === 'hi')
+  .reduce((sum: number, a: {avgTransactions: number}) => sum + a.avgTransactions, 0)
+
+const criticalRegion = Object.entries(
+  accounts
+    .filter((a: {risk: string}) => a.risk === 'hi')
+    .reduce((acc: Record<string, number>, a: {territory: string}) => {
+      acc[a.territory] = (acc[a.territory] || 0) + 1
+      return acc
+    }, {})
+).sort((a, b) => b[1] - a[1])[0][0]
+
+const criticalRegionCount = accounts
+  .filter((a: {risk: string, territory: string}) => 
+    a.risk === 'hi' && a.territory === criticalRegion
+  ).length
 
 /* ------------------------------------------------------------------ */
 /* Main Dashboard                                                       */
@@ -231,58 +269,8 @@ export default function Dashboard() {
           <div className={`workspace${drawerOpen ? '' : ' closed'}`}>
 
             {/* ===================== MAP ======================== */}
-            <div className="mapwrap" id="mapwrap">
-              <div className="map-grid" />
-
-              {/* Mexico map SVG */}
-              <svg
-                className="map-svg"
-                viewBox="0 0 1000 600"
-                preserveAspectRatio="xMidYMid meet"
-                aria-label="Mapa de México"
-              >
-                <defs>
-                  <linearGradient id="land" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%"   stopColor="#1c2840" />
-                    <stop offset="100%" stopColor="#162032" />
-                  </linearGradient>
-                  <filter id="landShadow" x="-5%" y="-5%" width="110%" height="115%">
-                    <feGaussianBlur stdDeviation="4" result="b" />
-                    <feOffset dx="0" dy="4" in="b" result="o" />
-                    <feFlood floodColor="#000" floodOpacity=".4" />
-                    <feComposite in2="o" operator="in" result="s" />
-                    <feMerge><feMergeNode in="s" /><feMergeNode in="SourceGraphic" /></feMerge>
-                  </filter>
-                  <radialGradient id="selGlow" cx="40%" cy="57%" r="12%">
-                    <stop offset="0%"   stopColor="#2dd4bf" stopOpacity=".18" />
-                    <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0" />
-                  </radialGradient>
-                </defs>
-
-                {/* mainland Mexico */}
-                <path
-                  d="M 145,100 L 200,98 L 200,110 L 245,115 L 295,126 L 333,126 L 365,128 L 395,124 L 410,118 L 430,128 L 445,148 L 460,170 L 480,178 L 510,182 L 540,184 L 565,196 L 585,212 L 605,228 L 625,246 L 635,268 L 632,295 L 624,322 L 632,350 L 648,375 L 668,395 L 692,412 L 715,420 L 740,418 L 760,414 L 778,408 L 795,398 L 808,386 L 818,372 L 824,358 L 830,348 L 850,344 L 875,343 L 895,346 L 905,358 L 900,378 L 888,395 L 880,415 L 875,432 L 862,442 L 845,448 L 825,452 L 808,455 L 795,468 L 778,478 L 760,484 L 738,478 L 720,470 L 705,464 L 690,460 L 668,464 L 645,466 L 622,460 L 598,450 L 572,442 L 545,428 L 520,418 L 495,402 L 470,392 L 448,378 L 432,360 L 422,338 L 408,310 L 392,288 L 375,272 L 355,256 L 335,242 L 315,225 L 298,205 L 280,188 L 262,170 L 245,150 L 232,132 L 218,118 L 205,110 L 200,108 L 200,100 Z"
-                  fill="url(#land)" stroke="#3a4866" strokeWidth="1.2" strokeLinejoin="round" filter="url(#landShadow)"
-                />
-
-                {/* Baja California peninsula */}
-                <path
-                  d="M 142,108 L 132,128 L 122,158 L 115,188 L 110,218 L 108,248 L 110,275 L 117,302 L 128,327 L 142,350 L 158,370 L 178,388 L 198,400 L 215,408 L 230,406 L 236,394 L 226,378 L 210,358 L 195,338 L 178,315 L 165,290 L 155,262 L 148,232 L 145,202 L 142,175 L 140,148 Z"
-                  fill="url(#land)" stroke="#3a4866" strokeWidth="1.2" strokeLinejoin="round" filter="url(#landShadow)"
-                />
-
-                {/* subtle internal state lines */}
-                <g stroke="#2a3653" strokeWidth=".6" fill="none" opacity=".35">
-                  <path d="M 410 140 Q 430 200 440 260" />
-                  <path d="M 320 235 Q 360 280 395 320" />
-                  <path d="M 580 220 Q 600 280 615 330" />
-                  <path d="M 800 390 Q 820 420 835 445" />
-                </g>
-              </svg>
-
-              {/* geo labels */}
-              <span className="geo-label sea-label" style={{ top: '42%', right: '4%' }}>Golfo de México</span>
-              <span className="geo-label sea-label" style={{ bottom: '20%', left: '26%' }}>Pacífico</span>
+            <div className="mapwrap" id="mapwrap" style={{ position: 'relative' }}>
+              <Map />
 
               {/* map tools */}
               <div className="map-tools">
@@ -345,20 +333,9 @@ export default function Dashboard() {
                 <div className="sub">Cluster muestra # de cuentas en zona</div>
               </div>
 
-              {/* clusters */}
-              <button className="cluster hi sz-xl" style={{ left: '41%',  top: '57.5%' }} title="Bajío · 342 cuentas"     onClick={openDrawer}>342</button>
-              <button className="cluster hi sz-l"  style={{ left: '54%',  top: '65%'   }} title="CDMX · 186 cuentas"      onClick={openDrawer}>186</button>
-              <button className="cluster md sz-l"  style={{ left: '55%',  top: '41%'   }} title="Monterrey · 128 cuentas" onClick={openDrawer}>128</button>
-              <button className="cluster md sz-m"  style={{ left: '14%',  top: '18%'   }} title="Tijuana · 64 cuentas"    onClick={openDrawer}>64</button>
-              <button className="cluster md sz-m"  style={{ left: '40%',  top: '30%'   }} title="Chihuahua · 72 cuentas"  onClick={openDrawer}>72</button>
-              <button className="cluster md sz-m"  style={{ left: '66%',  top: '66%'   }} title="Veracruz · 89 cuentas"   onClick={openDrawer}>89</button>
-              <button className="cluster lo sz-m"  style={{ left: '82%',  top: '58.5%' }} title="Yucatán · 47 cuentas"    onClick={openDrawer}>47</button>
-              <button className="cluster lo sz-s"  style={{ left: '28%',  top: '29%'   }} title="Hermosillo · 31 cuentas" onClick={openDrawer}>31</button>
-              <button className="cluster md sz-s"  style={{ left: '64%',  top: '73%'   }} title="Oaxaca · 38 cuentas"     onClick={openDrawer}>38</button>
-
               {/* hint chip */}
               <div className={`map-hint${hintGone ? ' gone' : ''}`}>
-                <span className="k">Click</span> un grupo para ver detalle
+                <span className="k">Click</span> un marcador para ver detalle
               </div>
             </div>
 
@@ -523,30 +500,28 @@ export default function Dashboard() {
 
           {/* =================== KPI BAR ====================== */}
           <footer className="kpibar">
-            <div className="kpi">
+             <div className="kpi">
               <span className="lbl">Total cuentas</span>
-              <span className="val">12,450</span>
-              <span className="delta">activas con refri en región</span>
+              <span className="val">{totalAccounts.toLocaleString()}</span>
+              <span className="delta">activas en región</span>
             </div>
 
             <div className="kpi">
               <span className="lbl">En riesgo alto</span>
-              <span className="val hi">1,890</span>
-              <span className="delta up">▲ <b>3.2%</b> vs mes pasado</span>
+              <span className="val hi">{highRisk}</span>
+              <span className="delta up">▲ alertas activas</span>
             </div>
 
             <div className="kpi">
-              <span className="lbl">Valor en riesgo</span>
-              <span className="val">
-                $3.2M <small style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>MXN</small>
-              </span>
-              <span className="delta">proyectado a 30 días</span>
+              <span className="lbl">Transacciones en riesgo</span>
+              <span className="val">{valueAtRisk.toLocaleString()}</span>
+              <span className="delta">suma · cuentas en riesgo alto</span>
             </div>
 
             <div className="kpi">
               <span className="lbl">Región crítica</span>
-              <span className="val" style={{ fontSize: '22px' }}>Bajío</span>
-              <span className="delta"><b>342</b> alertas activas</span>
+              <span className="val" style={{ fontSize: '22px' }}>{criticalRegion}</span>
+              <span className="delta"><b>{criticalRegionCount}</b> alertas activas</span>
             </div>
           </footer>
 
