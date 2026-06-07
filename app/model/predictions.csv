@@ -1,0 +1,19 @@
+Loading data from CSVs… sales_train: 4,788,729 rows customers: 371,727 rows coolers: 4,636,676 rows test: 199,923 rows Cleaning data… Traceback (most recent call last): File "/Users/doriandanielagonzalez/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3641, in get_loc return self._engine.get_loc(casted_key) ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ File "pandas/_libs/index.pyx", line 168, in pandas._libs.index.IndexEngine.get_loc File "pandas/_libs/index.pyx", line 197, in pandas._libs.index.IndexEngine.get_loc File "pandas/_libs/hashtable_class_helper.pxi", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item File "pandas/_libs/hashtable_class_helper.pxi", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item KeyError: 'rtm_customer_size_d'
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last): File "/Users/doriandanielagonzalez/hack4her-2026/app/model/churn_model.py", line 77, in <module> customers["rtm_customer_size_d"] = customers["rtm_customer_size_d"].fillna("unknown") ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^ File "/Users/doriandanielagonzalez/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pandas/core/frame.py", line 4378, in getitem indexer = self.columns.get_loc(key) ^^^^^^^^^^^^^^^^^^^^^^^^^ File "/Users/doriandanielagonzalez/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pandas/core/indexes/base.py", line 3648, in get_loc raise KeyError(key) from err KeyError: 'rtm_customer_size_d' ➜ hack4her-2026 git:(model) ✗ /Users/doriandanielagonzalez/.pyenv/versions/3.12.13/bin/python /Users/doriandanielagonzalez/hack4her-2026/app/model/churn_model.py Loading data from CSVs… sales_train: 4,788,729 rows customers: 371,727 rows coolers: 4,636,676 rows test: 199,923 rows Cleaning data… After cleaning: 4,772,826 rows
+Engineering cooler features… Engineering sales features… Feature matrix: (4299979, 16) Churn rate: 0.77% (32,967 / 4,299,979) Train: 3,441,015 | Test: 858,964
+Applying SMOTE… After SMOTE: 1,024,380 churn / 4,438,983 total
+Training LightGBM… [100] valid_0's binary_logloss: 0.0737767 [200] valid_0's binary_logloss: 0.0593935 [300] valid_0's binary_logloss: 0.0506069 [400] valid_0's binary_logloss: 0.0457301 [500] valid_0's binary_logloss: 0.0424553 Best iteration: 500
+── Evaluation ──────────────────────────────────────────────────────── precision recall f1-score support
+ active       1.00      0.99      0.99    852409
+   churn       0.30      0.45      0.36      6555
+
+accuracy                           0.99    858964
+
+macro avg 0.65 0.72 0.68 858964 weighted avg 0.99 0.99 0.99 858964
+ROC-AUC: 0.9527 Avg Precision: 0.2615
+Building SHAP explainer… Top features (SHAP): transactions_lag1 0.859846 boxes_lag1 0.783825 transactions_mom_pct 0.679447 boxes_mom_pct 0.521957 latest_coolers 0.439765 latest_doors 0.341666 customer_size_enc 0.300246 territory_enc 0.245160 subchannel_enc 0.211142 transactions_lag2 0.151795
+Generating predictions on test set… Saved predictions.csv — 199,923 rows
+Saving model → churn_model.pkl
+All done!
+Example prediction: {'churn_probability': 0.0025, 'risk_level': 'LOW', 'top_reasons': [{'factor': 'transactions_mom_pct', 'impact': 'decreases_churn', 'shap_value': -0.8842}, {'factor': 'transactions_lag1', 'impact': 'decreases_churn', 'shap_value': -0.7362}, {'factor': 'boxes_mom_pct', 'impact': 'decreases_churn', 'shap_value': -0.718}, {'factor': 'boxes_lag1', 'impact': 'decreases_churn', 'shap_value': -0.6072}, {'factor': 'latest_doors', 'impact': 'decreases_churn', 'shap_value': -0.2945}]}
