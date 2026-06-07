@@ -1,65 +1,557 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect, useRef } from 'react';
+
+/* ------------------------------------------------------------------ */
+/* SVG icon helper                                                      */
+/* ------------------------------------------------------------------ */
+function Icon({ id, className = 'i' }: { id: string; className?: string }) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <svg className={className} aria-hidden="true">
+      <use href={`#${id}`} />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Icon sprite (hidden)                                                 */
+/* ------------------------------------------------------------------ */
+function IconSprites() {
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+      <defs>
+        <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14m6-12v14" /></symbol>
+        <symbol id="i-accounts" viewBox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h12" /><circle cx="20" cy="19" r="2" /></symbol>
+        <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M6 8.5v3a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3" /></symbol>
+        <symbol id="i-predict" viewBox="0 0 24 24"><path d="M4 18 8 12l4 3 8-10" /><path d="m16 5 4 0 0 4" /></symbol>
+        <symbol id="i-report" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h6M9 16h4" /></symbol>
+        <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><circle cx="17" cy="9" r="2.5" /><path d="M16 20a5 5 0 0 1 5-5" /></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1A2 2 0 1 1 4.4 17l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1A2 2 0 1 1 7 4.4l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1A2 2 0 1 1 19.6 7l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></symbol>
+        <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .75-1.5 1.5-1.5 3M12 17.01v.01" /></symbol>
+        <symbol id="i-zoomin" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+        <symbol id="i-zoomout" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+        <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5z" /><path d="m3 13 9 5 9-5M3 18l9 5 9-5" /></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.57 2.8.7A2 2 0 0 1 22 16.92z" /></symbol>
+        <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z" /></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></symbol>
+        <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.8 5.5L19 10l-5.2 1.5L12 17l-1.8-5.5L5 10l5.2-1.5L12 3z" /></symbol>
+        <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5z" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-11" /></symbol>
+      </defs>
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Chip component (togglable)                                           */
+/* ------------------------------------------------------------------ */
+function Chip({
+  label,
+  risk,
+  defaultOn = false,
+  dot = false,
+}: {
+  label: string;
+  risk?: 'hi' | 'md' | 'lo';
+  defaultOn?: boolean;
+  dot?: boolean;
+}) {
+  const [on, setOn] = useState(defaultOn);
+  const cls = ['chip', risk ?? '', on ? 'on' : ''].filter(Boolean).join(' ');
+  return (
+    <span className={cls} onClick={() => setOn(!on)}>
+      {dot && <span className="d" />}
+      {label}
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Main Dashboard                                                       */
+/* ------------------------------------------------------------------ */
+export default function Dashboard() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [hintGone, setHintGone] = useState(false);
+  const [layerPopOpen, setLayerPopOpen] = useState(false);
+  const [activeRole, setActiveRole] = useState<'Gerente' | 'Supervisor' | 'Analista'>('Gerente');
+  const [activeView, setActiveView] = useState<'Mapa' | 'Lista'>('Mapa');
+  const layerBtnRef = useRef<HTMLButtonElement>(null);
+
+  function openDrawer() {
+    setDrawerOpen(true);
+    setHintGone(true);
+  }
+  function closeDrawer() {
+    setDrawerOpen(false);
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeDrawer();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
+    function onDoc() { setLayerPopOpen(false); }
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
+  }, []);
+
+  return (
+    <>
+      <IconSprites />
+
+      <div className="app">
+
+        {/* =================== SIDEBAR ======================== */}
+        <aside className="sidebar">
+          <div className="brand">
+            <div className="mark" />
+            <div className="name">
+              Churn Hunters
+              <small>Panel · Bajío</small>
+            </div>
+          </div>
+
+          <nav className="nav">
+            <a className="item active" href="#">
+              <Icon id="i-map" /> Mapa
+              <span className="badge">1,890</span>
+            </a>
+            <a className="item" href="#"><Icon id="i-accounts" /> Cuentas</a>
+            <a className="item" href="#"><Icon id="i-route" /> Rutas de visita</a>
+            <a className="item" href="#"><Icon id="i-predict" /> Predicciones</a>
+            <a className="item" href="#"><Icon id="i-report" /> Reportes</a>
+
+            <div className="nav-section">Equipo</div>
+            <a className="item" href="#">
+              <Icon id="i-team" /> Supervisores
+              <span className="badge muted">42</span>
+            </a>
+            <a className="item" href="#"><Icon id="i-settings" /> Ajustes</a>
+          </nav>
+
+          <div className="filters">
+            <h4>
+              Filtros
+              <span className="clear">limpiar</span>
+            </h4>
+
+            <div className="filter-block">
+              <label>Nivel de riesgo</label>
+              <div className="chips">
+                <Chip label="Alto"  risk="hi" defaultOn dot />
+                <Chip label="Medio" risk="md" defaultOn dot />
+                <Chip label="Bajo"  risk="lo" dot />
+              </div>
+            </div>
+
+            <div className="filter-block">
+              <label>Región</label>
+              <div className="select">
+                Bajío <span className="caret">▾</span>
+              </div>
+            </div>
+
+            <div className="filter-block">
+              <label>Tipo de negocio</label>
+              <div className="chips">
+                <Chip label="Tiendita"    defaultOn />
+                <Chip label="Abarrotes"   defaultOn />
+                <Chip label="Restaurante" />
+                <Chip label="+ 4" />
+              </div>
+            </div>
+
+            <div className="filter-block">
+              <label>Días sin pedido</label>
+              <div className="range">
+                <div className="bar">
+                  <div className="fill" />
+                  <div className="knob" style={{ left: '20%' }} />
+                  <div className="knob" style={{ left: '100%', background: 'var(--text)', borderColor: 'var(--brand)' }} />
+                </div>
+                <div className="lbls"><span>30d</span><span>120d+</span></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* =================== MAIN =========================== */}
+        <div className="main">
+
+          {/* TOPBAR */}
+          <header className="topbar">
+            <div className="title">
+              Panel de Intervención
+              <span className="sep">/</span>
+              <span className="crumb">México</span>
+              <span className="sep">/</span>
+              <span className="crumb">Bajío</span>
+            </div>
+
+            <div className="search">
+              <Icon id="i-search" className="i i-sm" />
+              <input placeholder="Buscar cuenta, ciudad o ID…" />
+              <kbd>⌘ K</kbd>
+            </div>
+
+            <div className="grow" />
+
+            <div className="role-switch" role="tablist" aria-label="Rol activo">
+              {(['Gerente', 'Supervisor', 'Analista'] as const).map((r) => (
+                <button
+                  key={r}
+                  className={activeRole === r ? 'on' : ''}
+                  onClick={() => setActiveRole(r)}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <button className="icon-btn" aria-label="notificaciones">
+              <Icon id="i-bell" />
+              <span className="dot" />
+            </button>
+            <button className="icon-btn" aria-label="ayuda">
+              <Icon id="i-help" />
+            </button>
+            <div className="avatar" aria-label="M. González">MG</div>
+          </header>
+
+          {/* WORKSPACE */}
+          <div className={`workspace${drawerOpen ? '' : ' closed'}`}>
+
+            {/* ===================== MAP ======================== */}
+            <div className="mapwrap" id="mapwrap">
+              <div className="map-grid" />
+
+              {/* Mexico map SVG */}
+              <svg
+                className="map-svg"
+                viewBox="0 0 1000 600"
+                preserveAspectRatio="xMidYMid meet"
+                aria-label="Mapa de México"
+              >
+                <defs>
+                  <linearGradient id="land" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%"   stopColor="#1c2840" />
+                    <stop offset="100%" stopColor="#162032" />
+                  </linearGradient>
+                  <filter id="landShadow" x="-5%" y="-5%" width="110%" height="115%">
+                    <feGaussianBlur stdDeviation="4" result="b" />
+                    <feOffset dx="0" dy="4" in="b" result="o" />
+                    <feFlood floodColor="#000" floodOpacity=".4" />
+                    <feComposite in2="o" operator="in" result="s" />
+                    <feMerge><feMergeNode in="s" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                  <radialGradient id="selGlow" cx="40%" cy="57%" r="12%">
+                    <stop offset="0%"   stopColor="#2dd4bf" stopOpacity=".18" />
+                    <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                {/* mainland Mexico */}
+                <path
+                  d="M 145,100 L 200,98 L 200,110 L 245,115 L 295,126 L 333,126 L 365,128 L 395,124 L 410,118 L 430,128 L 445,148 L 460,170 L 480,178 L 510,182 L 540,184 L 565,196 L 585,212 L 605,228 L 625,246 L 635,268 L 632,295 L 624,322 L 632,350 L 648,375 L 668,395 L 692,412 L 715,420 L 740,418 L 760,414 L 778,408 L 795,398 L 808,386 L 818,372 L 824,358 L 830,348 L 850,344 L 875,343 L 895,346 L 905,358 L 900,378 L 888,395 L 880,415 L 875,432 L 862,442 L 845,448 L 825,452 L 808,455 L 795,468 L 778,478 L 760,484 L 738,478 L 720,470 L 705,464 L 690,460 L 668,464 L 645,466 L 622,460 L 598,450 L 572,442 L 545,428 L 520,418 L 495,402 L 470,392 L 448,378 L 432,360 L 422,338 L 408,310 L 392,288 L 375,272 L 355,256 L 335,242 L 315,225 L 298,205 L 280,188 L 262,170 L 245,150 L 232,132 L 218,118 L 205,110 L 200,108 L 200,100 Z"
+                  fill="url(#land)" stroke="#3a4866" strokeWidth="1.2" strokeLinejoin="round" filter="url(#landShadow)"
+                />
+
+                {/* Baja California peninsula */}
+                <path
+                  d="M 142,108 L 132,128 L 122,158 L 115,188 L 110,218 L 108,248 L 110,275 L 117,302 L 128,327 L 142,350 L 158,370 L 178,388 L 198,400 L 215,408 L 230,406 L 236,394 L 226,378 L 210,358 L 195,338 L 178,315 L 165,290 L 155,262 L 148,232 L 145,202 L 142,175 L 140,148 Z"
+                  fill="url(#land)" stroke="#3a4866" strokeWidth="1.2" strokeLinejoin="round" filter="url(#landShadow)"
+                />
+
+                {/* subtle internal state lines */}
+                <g stroke="#2a3653" strokeWidth=".6" fill="none" opacity=".35">
+                  <path d="M 410 140 Q 430 200 440 260" />
+                  <path d="M 320 235 Q 360 280 395 320" />
+                  <path d="M 580 220 Q 600 280 615 330" />
+                  <path d="M 800 390 Q 820 420 835 445" />
+                </g>
+              </svg>
+
+              {/* geo labels */}
+              <span className="geo-label sea-label" style={{ top: '42%', right: '4%' }}>Golfo de México</span>
+              <span className="geo-label sea-label" style={{ bottom: '20%', left: '26%' }}>Pacífico</span>
+
+              {/* map tools */}
+              <div className="map-tools">
+                <div className="group">
+                  <button title="Acercar"><Icon id="i-zoomin" /></button>
+                  <button title="Alejar"><Icon id="i-zoomout" /></button>
+                </div>
+                <div className="group">
+                  <button
+                    title="Capas"
+                    ref={layerBtnRef}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLayerPopOpen((v) => !v);
+                    }}
+                  >
+                    <Icon id="i-layers" />
+                  </button>
+                </div>
+              </div>
+
+              {/* layer popover */}
+              <div className={`layer-pop${layerPopOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                <h5>Capas</h5>
+                <label className="opt"><input type="checkbox" defaultChecked /> Pines de cuentas</label>
+                <label className="opt"><input type="checkbox" defaultChecked /> Clusters</label>
+                <label className="opt"><input type="checkbox" /> Heatmap densidad</label>
+                <label className="opt"><input type="checkbox" /> Rutas asignadas</label>
+                <label className="opt"><input type="checkbox" defaultChecked /> Etiquetas de estado</label>
+              </div>
+
+              {/* view pills */}
+              <div className="view-pills">
+                {(['Mapa', 'Lista'] as const).map((v) => (
+                  <button
+                    key={v}
+                    className={activeView === v ? 'on' : ''}
+                    onClick={() => setActiveView(v)}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+
+              {/* legend */}
+              <div className="legend">
+                <h5>Riesgo de churn (30d)</h5>
+                <div className="row">
+                  <span className="swatch" style={{ color: 'var(--hi)', background: 'var(--hi)' }} />
+                  Alto · &gt;70%
+                </div>
+                <div className="row">
+                  <span className="swatch" style={{ color: 'var(--md)', background: 'var(--md)' }} />
+                  Medio · 40–70%
+                </div>
+                <div className="row">
+                  <span className="swatch" style={{ color: 'var(--lo)', background: 'var(--lo)' }} />
+                  Bajo · &lt;40%
+                </div>
+                <div className="sub">Cluster muestra # de cuentas en zona</div>
+              </div>
+
+              {/* clusters */}
+              <button className="cluster hi sz-xl" style={{ left: '41%',  top: '57.5%' }} title="Bajío · 342 cuentas"     onClick={openDrawer}>342</button>
+              <button className="cluster hi sz-l"  style={{ left: '54%',  top: '65%'   }} title="CDMX · 186 cuentas"      onClick={openDrawer}>186</button>
+              <button className="cluster md sz-l"  style={{ left: '55%',  top: '41%'   }} title="Monterrey · 128 cuentas" onClick={openDrawer}>128</button>
+              <button className="cluster md sz-m"  style={{ left: '14%',  top: '18%'   }} title="Tijuana · 64 cuentas"    onClick={openDrawer}>64</button>
+              <button className="cluster md sz-m"  style={{ left: '40%',  top: '30%'   }} title="Chihuahua · 72 cuentas"  onClick={openDrawer}>72</button>
+              <button className="cluster md sz-m"  style={{ left: '66%',  top: '66%'   }} title="Veracruz · 89 cuentas"   onClick={openDrawer}>89</button>
+              <button className="cluster lo sz-m"  style={{ left: '82%',  top: '58.5%' }} title="Yucatán · 47 cuentas"    onClick={openDrawer}>47</button>
+              <button className="cluster lo sz-s"  style={{ left: '28%',  top: '29%'   }} title="Hermosillo · 31 cuentas" onClick={openDrawer}>31</button>
+              <button className="cluster md sz-s"  style={{ left: '64%',  top: '73%'   }} title="Oaxaca · 38 cuentas"     onClick={openDrawer}>38</button>
+
+              {/* hint chip */}
+              <div className={`map-hint${hintGone ? ' gone' : ''}`}>
+                <span className="k">Click</span> un grupo para ver detalle
+              </div>
+            </div>
+
+            {/* ===================== DRAWER ===================== */}
+            <aside className="drawer">
+              <div className="drawer-head">
+                <h3>Detalle de cuenta</h3>
+                <button className="x" aria-label="cerrar" onClick={closeDrawer}>
+                  <Icon id="i-x" />
+                </button>
+              </div>
+
+              <div className="drawer-body">
+
+                {/* photo */}
+                <div className="photo">FOTO DEL LOCAL</div>
+
+                {/* name + risk */}
+                <div className="acct-card">
+                  <div className="acct-name">
+                    <div>
+                      <h2>Abarrotes &ldquo;La Esquina&rdquo;</h2>
+                      <div className="meta">
+                        <span>ID <b>#4827</b></span>
+                        <span>·</span>
+                        <span>Guadalajara, Jal.</span>
+                        <span>·</span>
+                        <span>Tiendita</span>
+                      </div>
+                    </div>
+                    <span className="risk-badge hi"><span className="pulse" />Alto</span>
+                  </div>
+                </div>
+
+                {/* score card */}
+                <div className="score-card">
+                  <div className="gauge">
+                    <svg viewBox="0 0 130 80">
+                      <path d="M 12 70 A 53 53 0 0 1 118 70"
+                        stroke="#243044" strokeWidth="9" fill="none" strokeLinecap="round" />
+                      <path d="M 12 70 A 53 53 0 0 1 47 19"
+                        stroke="#22c55e" strokeWidth="9" fill="none" strokeLinecap="round" opacity=".25" />
+                      <path d="M 47 19 A 53 53 0 0 1 83 19"
+                        stroke="#f59e0b" strokeWidth="9" fill="none" strokeLinecap="round" opacity=".25" />
+                      <path d="M 83 19 A 53 53 0 0 1 118 70"
+                        stroke="#f43f5e" strokeWidth="9" fill="none" strokeLinecap="round" />
+                      <g transform="translate(65 70) rotate(60)">
+                        <line x1="0" y1="0" x2="0" y2="-46" stroke="#eaeef5" strokeWidth="2.5" strokeLinecap="round" />
+                        <circle cx="0" cy="0" r="6" fill="#eaeef5" stroke="#0a0f15" strokeWidth="2" />
+                      </g>
+                      <text x="12"  y="78" textAnchor="middle" fill="#5e6a80" fontSize="8" fontFamily="JetBrains Mono">0</text>
+                      <text x="118" y="78" textAnchor="middle" fill="#5e6a80" fontSize="8" fontFamily="JetBrains Mono">100</text>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="lbl">Riesgo de churn · 30d</div>
+                    <div className="num">88<small>%</small></div>
+                    <div className="delta">+24 pts en 14 días</div>
+                  </div>
+                </div>
+
+                {/* mini stat grid */}
+                <div className="mini-grid">
+                  <div className="mini-stat">
+                    <span className="lbl">Días sin pedido</span>
+                    <span className="val hi">65</span>
+                    <span className="sub">vs prom. 18d</span>
+                  </div>
+                  <div className="mini-stat">
+                    <span className="lbl">Valor cliente</span>
+                    <span className="val">$184k</span>
+                    <span className="sub">MXN / año</span>
+                  </div>
+                  <div className="mini-stat" style={{ gridColumn: 'span 2' }}>
+                    <span className="lbl">Productividad refrigerador</span>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '14px' }}>
+                      <span className="val hi">
+                        2.0<small style={{ fontSize: '13px', color: 'var(--text-muted)' }}> / 5.0</small>
+                      </span>
+                      <div className="fridge-row" style={{ flex: 1 }}>
+                        <span className="full" />
+                        <span className="full" />
+                        <span className="empty" />
+                        <span className="empty" />
+                        <span className="empty" />
+                      </div>
+                    </div>
+                    <span className="sub">↓ 60% vs trimestre pasado</span>
+                  </div>
+                </div>
+
+                {/* order history chart */}
+                <div className="mini-stat" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="lbl">Tendencia de pedidos · 12m</span>
+                    <span className="sub mono" style={{ fontSize: '11px' }}>cajas/mes</span>
+                  </div>
+                  <svg viewBox="0 0 320 80" style={{ marginTop: '6px', height: '80px', width: '100%' }}>
+                    <defs>
+                      <linearGradient id="trendfill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%"   stopColor="#f43f5e" stopOpacity=".35" />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M 0 18 L 28 22 L 56 16 L 84 26 L 112 30 L 140 38 L 168 46 L 196 54 L 224 60 L 252 66 L 280 70 L 308 74 L 320 78 L 320 80 L 0 80 Z"
+                      fill="url(#trendfill)"
+                    />
+                    <path
+                      d="M 0 18 L 28 22 L 56 16 L 84 26 L 112 30 L 140 38 L 168 46 L 196 54 L 224 60 L 252 66 L 280 70 L 308 74 L 320 78"
+                      fill="none" stroke="#f43f5e" strokeWidth="1.5" strokeLinejoin="round"
+                    />
+                    <line x1="0" y1="78" x2="320" y2="78" stroke="#2a3653" strokeWidth=".5" strokeDasharray="2 3" />
+                    <circle cx="308" cy="74" r="3" fill="#f43f5e" stroke="#0a0f15" strokeWidth="1.5" />
+                  </svg>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: 'var(--text-dim)', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
+                    <span>JUN&apos;25</span><span>DIC&apos;25</span><span>JUN&apos;26</span>
+                  </div>
+                </div>
+
+                {/* contact */}
+                <div className="contact">
+                  <div className="head">
+                    <div className="av">ML</div>
+                    <div className="info">
+                      <strong>Sra. María López</strong>
+                      <span>Dueña · Cliente desde 2017</span>
+                    </div>
+                  </div>
+                  <div className="links">
+                    <a href="#"><Icon id="i-phone" className="i i-sm" />Llamar</a>
+                    <a href="#"><Icon id="i-msg"   className="i i-sm" />WhatsApp</a>
+                    <a href="#"><Icon id="i-mail"  className="i i-sm" />Correo</a>
+                  </div>
+                </div>
+
+                {/* recommended action */}
+                <div className="reco">
+                  <div className="label">
+                    <Icon id="i-spark" className="i i-sm" /> Acción recomendada
+                  </div>
+                  <h4>Enviar supervisor a auditoría de equipos + oferta de retención</h4>
+                  <p>Intervenir esta semana mientras la señal es accionable. Cliente con historial estable de 7 años y caída reciente repentina.</p>
+                  <div className="conf">
+                    Confianza del modelo
+                    <div className="bar"><div /></div>
+                    <b>62%</b>
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="drawer-actions">
+                <button className="btn-sec">Asignar visita</button>
+                <button className="btn-pri">
+                  Ver perfil completo <Icon id="i-arrow" className="i i-sm" />
+                </button>
+              </div>
+
+            </aside>
+          </div>
+
+          {/* =================== KPI BAR ====================== */}
+          <footer className="kpibar">
+            <div className="kpi">
+              <span className="lbl">Total cuentas</span>
+              <span className="val">12,450</span>
+              <span className="delta">activas con refri en región</span>
+            </div>
+
+            <div className="kpi">
+              <span className="lbl">En riesgo alto</span>
+              <span className="val hi">1,890</span>
+              <span className="delta up">▲ <b>3.2%</b> vs mes pasado</span>
+            </div>
+
+            <div className="kpi">
+              <span className="lbl">Valor en riesgo</span>
+              <span className="val">
+                $3.2M <small style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 500 }}>MXN</small>
+              </span>
+              <span className="delta">proyectado a 30 días</span>
+            </div>
+
+            <div className="kpi">
+              <span className="lbl">Región crítica</span>
+              <span className="val" style={{ fontSize: '22px' }}>Bajío</span>
+              <span className="delta"><b>342</b> alertas activas</span>
+            </div>
+          </footer>
+
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
