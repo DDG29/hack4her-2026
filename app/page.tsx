@@ -18,6 +18,11 @@ const Map = dynamic(() => import('./components/Map'), {
   loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando mapa...</div>
 });
 
+const Predicciones = dynamic(() => import('./components/Predicciones'), {
+  ssr: false,
+  loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando predicciones...</div>
+});
+
 /* ------------------------------------------------------------------ */
 /* SVG icon helper                                                      */
 /* ------------------------------------------------------------------ */
@@ -121,6 +126,7 @@ export default function Dashboard() {
   const [activeRole, setActiveRole] = useState<'Gerente' | 'Supervisor' | 'Analista'>('Gerente');
   const [activeView, setActiveView] = useState<'Mapa' | 'Lista'>('Mapa');
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [activeNav, setActiveNav] = useState<string>('Mapa');
   const layerBtnRef = useRef<HTMLButtonElement>(null);
 
   function openDrawer() {
@@ -168,13 +174,15 @@ export default function Dashboard() {
           </div>
 
           <nav className="nav">
-            <a className="item active" href="#">
+            <a className={`item${activeNav === 'Mapa' ? ' active' : ''}`} href="#" onClick={e => { e.preventDefault(); setActiveNav('Mapa'); }}>
               <Icon id="i-map" /> Mapa
               <span className="badge">1,890</span>
             </a>
             <a className="item" href="#"><Icon id="i-accounts" /> Cuentas</a>
             <a className="item" href="#"><Icon id="i-route" /> Rutas de visita</a>
-            <a className="item" href="#"><Icon id="i-predict" /> Predicciones</a>
+            <a className={`item${activeNav === 'Predicciones' ? ' active' : ''}`} href="#" onClick={e => { e.preventDefault(); setActiveNav('Predicciones'); }}>
+              <Icon id="i-predict" /> Predicciones
+            </a>
             <a className="item" href="#"><Icon id="i-report" /> Reportes</a>
 
             <div className="nav-section">Equipo</div>
@@ -275,14 +283,20 @@ export default function Dashboard() {
           </header>
 
           {/* WORKSPACE */}
-          <div className={`workspace${drawerOpen ? '' : ' closed'}`}>
+          <div className={`workspace${drawerOpen && activeNav === 'Mapa' ? '' : ' closed'}`}>
 
-            {/* ===================== MAP ======================== */}
+            {/* ===================== MAP / PREDICCIONES ======================== */}
             <div className="mapwrap" id="mapwrap" style={{ position: 'relative' }}>
-              <Map onStoreSelect={handleStoreSelect} />
+              {activeNav === 'Predicciones' ? (
+                <div style={{ height: '100%', overflow: 'hidden', background: 'var(--bg-2)' }}>
+                  <Predicciones />
+                </div>
+              ) : (
+                <Map onStoreSelect={handleStoreSelect} />
+              )}
 
               {/* map tools */}
-              <div className="map-tools">
+              <div className="map-tools" style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
                 <div className="group">
                   <button title="Acercar"><Icon id="i-zoomin" /></button>
                   <button title="Alejar"><Icon id="i-zoomout" /></button>
@@ -302,7 +316,7 @@ export default function Dashboard() {
               </div>
 
               {/* layer popover */}
-              <div className={`layer-pop${layerPopOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()}>
+              <div className={`layer-pop${layerPopOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()} style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
                 <h5>Capas</h5>
                 <label className="opt"><input type="checkbox" defaultChecked /> Pines de cuentas</label>
                 <label className="opt"><input type="checkbox" defaultChecked /> Clusters</label>
@@ -312,7 +326,7 @@ export default function Dashboard() {
               </div>
 
               {/* view pills */}
-              <div className="view-pills">
+              <div className="view-pills" style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
                 {(['Mapa', 'Lista'] as const).map((v) => (
                   <button
                     key={v}
@@ -325,7 +339,7 @@ export default function Dashboard() {
               </div>
 
               {/* legend */}
-              <div className="legend">
+              <div className="legend" style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
                 <h5>Riesgo de churn (30d)</h5>
                 <div className="row">
                   <span className="swatch" style={{ color: 'var(--hi)', background: 'var(--hi)' }} />
@@ -343,7 +357,7 @@ export default function Dashboard() {
               </div>
 
               {/* hint chip */}
-              <div className={`map-hint${hintGone ? ' gone' : ''}`}>
+              <div className={`map-hint${hintGone || activeNav === 'Predicciones' ? ' gone' : ''}`}>
                 <span className="k">Click</span> un marcador para ver detalle
               </div>
             </div>
