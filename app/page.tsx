@@ -23,6 +23,16 @@ const Predicciones = dynamic(() => import('./components/Predicciones'), {
   loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando predicciones...</div>
 });
 
+const RutasDeVisita = dynamic(() => import('./components/RutasDeVisita'), {
+  ssr: false,
+  loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando ruta...</div>
+});
+
+const Supervisores = dynamic(() => import('./components/Supervisores'), {
+  ssr: false,
+  loading: () => <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>Cargando supervisores...</div>
+});
+
 /* ------------------------------------------------------------------ */
 /* SVG icon helper                                                      */
 /* ------------------------------------------------------------------ */
@@ -178,17 +188,16 @@ export default function Dashboard() {
               <Icon id="i-map" /> Mapa
               <span className="badge">1,890</span>
             </a>
-            <a className="item" href="#"><Icon id="i-accounts" /> Cuentas</a>
-            <a className="item" href="#"><Icon id="i-route" /> Rutas de visita</a>
+            <a className={`item${activeNav === 'Rutas' ? ' active' : ''}`} href="#" onClick={e => { e.preventDefault(); setActiveNav('Rutas'); }}><Icon id="i-route" /> Rutas de visita</a>
             <a className={`item${activeNav === 'Predicciones' ? ' active' : ''}`} href="#" onClick={e => { e.preventDefault(); setActiveNav('Predicciones'); }}>
               <Icon id="i-predict" /> Predicciones
             </a>
             <a className="item" href="#"><Icon id="i-report" /> Reportes</a>
 
             <div className="nav-section">Equipo</div>
-            <a className="item" href="#">
+            <a className={`item${activeNav === 'Supervisores' ? ' active' : ''}`} href="#" onClick={e => { e.preventDefault(); setActiveNav('Supervisores'); }}>
               <Icon id="i-team" /> Supervisores
-              <span className="badge muted">42</span>
+              <span className="badge muted">6</span>
             </a>
             <a className="item" href="#"><Icon id="i-settings" /> Ajustes</a>
           </nav>
@@ -283,7 +292,7 @@ export default function Dashboard() {
           </header>
 
           {/* WORKSPACE */}
-          <div className={`workspace${drawerOpen && activeNav === 'Mapa' ? '' : ' closed'}`}>
+          <div className={`workspace${drawerOpen && activeNav === 'Mapa' ? '' : ' closed'}`} style={{ overflow: activeNav !== 'Mapa' ? 'hidden' : undefined }}>
 
             {/* ===================== MAP / PREDICCIONES ======================== */}
             <div className="mapwrap" id="mapwrap" style={{ position: 'relative' }}>
@@ -291,12 +300,20 @@ export default function Dashboard() {
                 <div style={{ height: '100%', overflow: 'hidden', background: 'var(--bg-2)' }}>
                   <Predicciones />
                 </div>
+              ) : activeNav === 'Rutas' ? (
+                <div style={{ height: '100%', overflow: 'hidden', background: 'var(--bg-2)' }}>
+                  <RutasDeVisita />
+                </div>
+              ) : activeNav === 'Supervisores' ? (
+                <div style={{ height: '100%', overflow: 'hidden', background: 'var(--bg-2)' }}>
+                  <Supervisores />
+                </div>
               ) : (
                 <Map onStoreSelect={handleStoreSelect} />
               )}
 
               {/* map tools */}
-              <div className="map-tools" style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
+              <div className="map-tools" style={{ display: activeNav === 'Predicciones' || activeNav === 'Rutas' ? 'none' : undefined }}>
                 <div className="group">
                   <button title="Acercar"><Icon id="i-zoomin" /></button>
                   <button title="Alejar"><Icon id="i-zoomout" /></button>
@@ -316,7 +333,7 @@ export default function Dashboard() {
               </div>
 
               {/* layer popover */}
-              <div className={`layer-pop${layerPopOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()} style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
+              <div className={`layer-pop${layerPopOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()} style={{ display: activeNav === 'Predicciones' || activeNav === 'Rutas' ? 'none' : undefined }}>
                 <h5>Capas</h5>
                 <label className="opt"><input type="checkbox" defaultChecked /> Pines de cuentas</label>
                 <label className="opt"><input type="checkbox" defaultChecked /> Clusters</label>
@@ -326,7 +343,7 @@ export default function Dashboard() {
               </div>
 
               {/* view pills */}
-              <div className="view-pills" style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
+              <div className="view-pills" style={{ display: activeNav === 'Predicciones' || activeNav === 'Rutas' ? 'none' : undefined }}>
                 {(['Mapa', 'Lista'] as const).map((v) => (
                   <button
                     key={v}
@@ -339,7 +356,7 @@ export default function Dashboard() {
               </div>
 
               {/* legend */}
-              <div className="legend" style={{ display: activeNav === 'Predicciones' ? 'none' : undefined }}>
+              <div className="legend" style={{ display: activeNav === 'Predicciones' || activeNav === 'Rutas' ? 'none' : undefined }}>
                 <h5>Riesgo de churn (30d)</h5>
                 <div className="row">
                   <span className="swatch" style={{ color: 'var(--hi)', background: 'var(--hi)' }} />
